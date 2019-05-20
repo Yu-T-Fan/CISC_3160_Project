@@ -1,0 +1,300 @@
+#interpreter project for CISC 3160
+#by yutian fan
+#check if an variable is uninitilized if there is a uninitiliazed var return true else false
+def check_var(val, num_var):
+    for i in num_var:
+        if val[i]==None:
+            return true
+    return false
+
+#find the variable position in the variable array
+def find_varpos(target, variable):
+    for i in range(len(variable)):
+        if variable[i]==target:
+            return i
+    return -1
+#turn subarg into token
+def peren(subarg, token, argument):
+    #keep addding token from subarg until subarg is complete
+    i=0
+    ii=0
+    while (ii < (len(subarg))):
+        #detect var in arg and put it in token
+        if(subarg[i].isidentifier()):
+            if(ii == (len(subarg)-1)): #prevent string error if ii is the last index of subarg just store
+                if(i==ii):
+                    token.append(subarg[i])
+                    ii=ii+1
+                    break
+                else:
+                    token.append(subarg[i:])
+                    ii=ii+1
+                    break
+            else:
+                if(ii < (len(subarg)-1)):
+                    k=0
+                    for k in subarg:
+                        if((ii) < (len(subarg)-1)):
+                            if subarg[ii+1].isidentifier():
+                                ii = ii+1
+                            else:
+                                break
+                if(i==ii):
+                    token.append(subarg[i])
+                else:
+                    token.append(subarg[i:ii+1])
+                if(ii < (len(subarg)-1)):
+                    i=ii+1
+                    ii=i
+                    continue
+        #detect number in arg and put it in token
+        if(subarg[i].isnumeric()):
+            if(ii == (len(subarg)-1)):
+                if(i==ii):
+                    token.append(int(subarg[i]))
+                    ii=ii+1
+                    break
+                else:
+                    token.append(int(subarg[i:]))
+                    ii=ii+1
+                    break
+            if ii< (len(subarg)-1):
+                k=0
+                for k in subarg:
+                    if (ii) < len(subarg)-1:
+                        if subarg[ii+1].isnumeric():
+                            ii = ii+1
+                    else:
+                        break
+                #convert that section into int and append to token
+                if(i==ii):
+                    token.append(int(subarg[i]))
+                else:
+                    token.append(int(subarg[i:ii+1]))
+                if(ii < (len(subarg))):
+                    i=ii+1
+                    ii=i
+                    continue
+        #detect operator in arg and put it in token
+        if(subarg[i] in operator):
+            #check if it is a operator * + -
+            if(subarg[i] in operator[:3]):
+                #if there is -- ignore it
+                if(subarg[i:(i+2)]=="--"):
+                    if subarg[i+3] in operator[:2]:
+                        print("error ", argument)
+                        exit()
+                    if(ii < (len(subarg)-1)):
+                        i=i+2
+                        ii=i
+                        continue
+                #what to do when detect a *
+                if(subarg[i]=="*"):
+                    token.append(subarg[i])
+                    if(ii < (len(subarg)-1)):
+                        i=ii+1
+                        ii=i
+                        continue
+                #what to do when detect a +
+                if(subarg[i]=="+"):
+                    token.append(subarg[i])
+                    if(ii < (len(subarg)-1)):
+                        i=ii+1
+                        ii=i
+                        continue
+                #what to do when detect a - 
+                if(subarg[i]=="-"):
+                    token.append(subarg[i])
+                    if(ii < (len(subarg)-1)):
+                        i=ii+1
+                        ii=i
+                        continue
+
+    #token.pop()
+
+    return token
+
+#process token
+def proctoken(token, argument, variable):
+    #how to process when there is 3 token in stack
+    if len(token)==3:  
+        token3=token.pop()
+        token2=token.pop()
+        token1=token.pop()
+        print(token3)
+        print(token2)
+        print(token1)
+        if token2 not in operator[:3]:
+            print("error in token process token2 L124", argument)
+            exit()
+        if token1 in operator[:3] or token3 in operator[:3]:
+            print("error in token process token1 L128", argument)
+            exit()
+        #if the token is a variable find it and replace the token with its value
+        if not isinstance(token1,int):
+            if find_varpos(token1, variable) == (-1):
+                print("error L134",argument)
+                exit()
+            else:
+                token1=val[find_varpos(token1, variable)]
+        if not isinstance(token3,int):
+            if find_varpos(token3, variable) == -1:
+                print("error L140",argument)
+                exit()
+            else:
+                token3=val[find_varpos(token3, variable)]
+        if token2 is "*":
+            token.append((token1 * token3))
+            return token
+        elif token2 is "+":
+            token.append((token1 + token3))
+            return token
+        elif token2 is "-":
+            token.append((token1 - token3))
+            return token
+        else:
+            print("error L157",argument)
+            exit()
+    elif len(token)==2: 
+        token2=token.pop()
+        token1=token.pop()
+        if token1 is []:
+            print("t1")
+            token.append(token2)
+            return token
+        if token2 is []:
+            print("t2")
+            token.append(token1)
+            return token
+        if token1 is not operator[2] or token2 in operator[:3]:
+            print("error in token process L153", argument)
+            print(token1)
+            print(token2)
+            exit()
+        #if the token is a variable find it and replace the token with its value
+        if token2.isidentifier():
+            if find_varpos(token2, variable) == -1:
+                print("error L166", argument)
+                exit()
+            else:
+                token1=val[find_varpos(token2, variable)]
+        token.append(-token2)
+    if len(token)==0:
+        return token
+    if len(token)==1:
+        return token
+
+
+num_var=0
+variable=[]
+varpos=0
+val=[]
+stack=[]
+token=[]
+subtoken=[]
+end=""
+operator="*","+","-","(",")"
+#read user input
+
+
+
+argument =input('code(enter return to end and no space):')
+point1=0
+point2=argument.find("=")
+#if the input have a = then its an argument
+if(find_varpos(argument[:point2], variable)==(-1)):
+    variable.append(argument[point1:point2])
+    varpos=num_var
+    num_var=num_var+1
+else:
+    varpos=find_varpos(argument[:point2], variable)
+if("=" in argument):
+    #check is there is code after the =
+    if(argument[point2+1] == None):
+        print("error L201",argument)
+        exit()
+    
+    #check if the variable name is right syntex
+    if(not(argument[0:point2].isidentifier())):
+        print("error L206", argument)
+        exit()
+    stack.append(argument[point1:point2])
+    #splite argument into token identifie if the next token is a variable or operator
+    point1 = point2+1
+    point2 = point1
+else:
+    print("error L226",argument)
+    exit()
+while point2 < (len(argument)):    
+    #check for () in argument
+    while argument[point1:].find('(') is not (-1):
+        if("(" in argument):
+            point3=argument.find("(")
+            if argument[point1] != argument[point3]:
+                subtoken.append(peren(argument[point1:point3], subtoken, argument))
+                token.append(proctoken(subtoken, argument, variable))
+            point4=argument.find(")")
+            if point4== -1:
+                print("error L222", argument)
+                exit()
+            subarg=argument[point3+1:point4]
+            if(point4==len(argument)):
+                break
+            else:
+                point1=point4+1
+                point2=point1
+            peren(subarg, subtoken, argument)
+            token.append(proctoken(subtoken, argument, variable))
+    #check for var and val and operator not in the ()
+    if argument[point1].isnumeric() and argument[point2].isnumeric():
+        while point2<len(argument)-1:
+            if argument[point2].isnumeric():
+                point2+=1
+            else:
+                break
+        if point1 <point2:
+            token.append(int(argument[point1:point2]))
+            point1=point2
+        else:
+            token.append(int(argument[point1]))
+            if point2<len(argument)-1:
+                point2+=1
+                point1=point2
+    if argument[point1].isidentifier() and argument[point2].isidentifier():
+        while point2<len(argument)-1:
+            if argument[point2].isidentifier():
+                point2+=1
+            else:
+                break
+        if point1 <point2:
+            token.append(argument[point1:point2])
+            point1=point2
+        else:
+            token.append(argument[point1])
+            if point2<len(argument)-1:
+                point2+=1
+                point1=point2
+    if argument[point1] in operator[:3]:
+        token.append(argument[point1])
+        if point2<len(argument):
+            point2=point2+1
+            point1=point2
+    else:
+        if point2<len(argument):
+            point2=point2+1
+print(token)
+#this stage all should be in token
+while len(token) is not 1:
+    print(token)
+    token=(proctoken(token, argument, variable))
+    
+val.append(token.pop())
+
+
+'''if check_var(val, num_var):
+    print('a variable is uninitialized')
+    exit()'''
+print(argument)
+for i in variable:
+    print(variable[0], "=",  val[0] )
+            
